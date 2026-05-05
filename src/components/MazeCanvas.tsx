@@ -7,6 +7,18 @@ interface MazeCanvasProps {
   onToggle: (segmentId: string) => void;
 }
 
+function getAxisTextAnchor(index: number, total: number) {
+  if (index === 0) {
+    return 'start';
+  }
+
+  if (index === total - 1) {
+    return 'end';
+  }
+
+  return 'middle';
+}
+
 function handleKeyboardToggle(event: KeyboardEvent<SVGGElement>, onToggle: () => void) {
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault();
@@ -16,13 +28,16 @@ function handleKeyboardToggle(event: KeyboardEvent<SVGGElement>, onToggle: () =>
 
 export function MazeCanvas({ geometry, selectedIds, onToggle }: MazeCanvasProps) {
   const scale = 32;
-  const padding = 44;
-  const width = geometry.width * scale + padding * 2;
-  const height = geometry.height * scale + padding * 2;
-  const xLabelStride = geometry.gridStep > 0 ? Math.max(1, Math.ceil(72 / (geometry.gridStep * scale))) : 1;
-  const yLabelStride = geometry.gridStep > 0 ? Math.max(1, Math.ceil(56 / (geometry.gridStep * scale))) : 1;
-  const toSvgX = (x: number) => padding + x * scale;
-  const toSvgY = (y: number) => height - padding - y * scale;
+  const padding = {
+    top: 22,
+    right: 40,
+    bottom: 54,
+    left: 58,
+  };
+  const width = geometry.width * scale + padding.left + padding.right;
+  const height = geometry.height * scale + padding.top + padding.bottom;
+  const toSvgX = (x: number) => padding.left + x * scale;
+  const toSvgY = (y: number) => height - padding.bottom - y * scale;
 
   return (
     <section className="editor-panel">
@@ -116,33 +131,30 @@ export function MazeCanvas({ geometry, selectedIds, onToggle }: MazeCanvasProps)
             );
           })}
 
-          {geometry.yPositions.map((y, index) =>
-            index === 0 || index === geometry.yPositions.length - 1 || index % yLabelStride === 0 ? (
-              <text
-                key={`label-y-${index}`}
-                x={14}
-                y={toSvgY(y) + 4}
-                className="maze-canvas__label"
-              >
-                Y{index}: {y}m
-              </text>
-            ) : null,
-          )}
+          {geometry.yPositions.map((y, index) => (
+            <text
+              key={`label-y-${index}`}
+              x={padding.left - 10}
+              y={toSvgY(y)}
+              textAnchor="end"
+              dominantBaseline="middle"
+              className="maze-canvas__label maze-canvas__label--y"
+            >
+              Y{index}: {y}m
+            </text>
+          ))}
 
-          {geometry.xPositions.map((x, index) =>
-            index === 0 || index === geometry.xPositions.length - 1 || index % xLabelStride === 0 ? (
-              <text
-                key={`label-x-${index}`}
-                x={toSvgX(x)}
-                y={height - 12}
-                textAnchor="end"
-                transform={`rotate(-35 ${toSvgX(x)} ${height - 12})`}
-                className="maze-canvas__label"
-              >
-                X{index}: {x}m
-              </text>
-            ) : null,
-          )}
+          {geometry.xPositions.map((x, index) => (
+            <text
+              key={`label-x-${index}`}
+              x={toSvgX(x)}
+              y={height - 18}
+              textAnchor={getAxisTextAnchor(index, geometry.xPositions.length)}
+              className="maze-canvas__label maze-canvas__label--x"
+            >
+              X{index}: {x}m
+            </text>
+          ))}
         </svg>
       </div>
     </section>
