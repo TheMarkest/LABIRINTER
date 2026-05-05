@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from 'react';
 import type { GridGeometry } from '../domain/types';
 
 interface MazeCanvasProps {
@@ -6,7 +7,7 @@ interface MazeCanvasProps {
   onToggle: (segmentId: string) => void;
 }
 
-function handleKeyboardToggle(event: React.KeyboardEvent<SVGGElement>, onToggle: () => void) {
+function handleKeyboardToggle(event: KeyboardEvent<SVGGElement>, onToggle: () => void) {
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault();
     onToggle();

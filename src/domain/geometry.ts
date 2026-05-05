@@ -36,7 +36,7 @@ function createSegment(params: ProjectParams, axis: 'x' | 'y', kind: WallKind, g
   };
 }
 
-function buildHorizontalSegments(params: ProjectParams, xPositions: number[], yPositions: number[], width: number, height: number) {
+function buildHorizontalSegments(params: ProjectParams, xPositions: number[], yPositions: number[], height: number) {
   const segments: WallSegment[] = [];
 
   yPositions.forEach((y, lineIndex) => {
@@ -106,7 +106,7 @@ export function createGeometry(params: ProjectParams): GridGeometry {
   const xPositions = [0, ...transverseLines.map((line) => line.x), width];
   const yPositions = longitudinalLines.map((line) => line.y);
   const segments = [
-    ...buildHorizontalSegments(params, xPositions, yPositions, width, height),
+    ...buildHorizontalSegments(params, xPositions, yPositions, height),
     ...buildVerticalSegments(params, xPositions, yPositions, width),
   ];
 

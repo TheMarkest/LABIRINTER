@@ -3,10 +3,8 @@ import { AppHeader } from './components/AppHeader';
 import { MazeCanvas } from './components/MazeCanvas';
 import { ParameterPanel } from './components/ParameterPanel';
 import { SummaryPanel } from './components/SummaryPanel';
-import { buildSelectionSummary } from './domain/calculations';
-import { buildExportRows } from './domain/calculations';
+import { buildExportRows, buildSelectionSummary } from './domain/calculations';
 import { createGeometry } from './domain/geometry';
-import { downloadCsvFile, exportPdf } from './domain/exports';
 import { defaultParams } from './domain/params';
 import type { ProjectParams, WallKind } from './domain/types';
 
@@ -86,11 +84,13 @@ export default function App() {
     setSelectedIds(new Set());
   }
 
-  function handleExportCsv() {
+  async function handleExportCsv() {
+    const { downloadCsvFile } = await import('./domain/exports');
     downloadCsvFile(exportRows);
   }
 
-  function handleExportPdf() {
+  async function handleExportPdf() {
+    const { exportPdf } = await import('./domain/exports');
     exportPdf({
       params,
       geometry,

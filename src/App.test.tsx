@@ -16,4 +16,9 @@ describe('App', () => {
 
     expect(screen.getByText(/Selected walls/i)).toHaveTextContent('1');
   });
+
+  it('shows the planning console subtitle', () => {
+    render(<App />);
+    expect(screen.getByText(/fabric maze planning console/i)).toBeInTheDocument();
+  });
 });
