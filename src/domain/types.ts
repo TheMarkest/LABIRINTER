@@ -42,9 +42,12 @@ export interface WallSegment {
 export interface GridGeometry {
   width: number;
   height: number;
+  gridStep: number;
   transverseStep: number;
   transverseLines: Array<LineMarker & { x: number }>;
   longitudinalLines: Array<LineMarker & { y: number }>;
+  majorXPositions: number[];
+  majorYPositions: number[];
   xPositions: number[];
   yPositions: number[];
   segments: WallSegment[];
@@ -78,8 +81,19 @@ export interface ExportRow {
 }
 
 export interface ExportScene {
+  schemeTitle: string;
   params: ProjectParams;
   geometry: GridGeometry;
   summary: MaterialSummary;
   rows: ExportRow[];
+}
+
+export interface CsvSchemeDocument {
+  schemeTitle: string;
+  params: ProjectParams;
+  rows: ExportRow[];
+}
+
+export interface ImportedSchemeDocument extends CsvSchemeDocument {
+  selectedIds: string[];
 }

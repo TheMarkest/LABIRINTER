@@ -16,6 +16,14 @@ describe('createGeometry', () => {
     expect(geometry.transverseLines.map((line) => line.x)).toEqual([5, 10]);
   });
 
+  it('creates an equal editor grid on both axes from the P-derived step', () => {
+    const geometry = createGeometry({ ...defaultParams, P: 14 });
+
+    expect(geometry.gridStep).toBe(1);
+    expect(geometry.xPositions).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+    expect(geometry.yPositions).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+  });
+
   it('marks perimeter segments separately from interior segments', () => {
     const geometry = createGeometry(defaultParams);
 

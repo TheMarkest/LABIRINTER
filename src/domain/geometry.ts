@@ -11,6 +11,35 @@ function createPoint(x: number, y: number): Point {
   };
 }
 
+function buildAxisPositions(length: number, step: number) {
+  if (length <= 0) {
+    return [0];
+  }
+
+  if (step <= 0) {
+    return [0, roundMetric(length)];
+  }
+
+  const positions = [0];
+
+  for (let current = step; current < length; current += step) {
+    const rounded = roundMetric(current);
+    const lastPosition = positions[positions.length - 1];
+
+    if (rounded > lastPosition) {
+      positions.push(rounded);
+    }
+  }
+
+  const roundedLength = roundMetric(length);
+
+  if (positions[positions.length - 1] !== roundedLength) {
+    positions.push(roundedLength);
+  }
+
+  return positions;
+}
+
 function createSegment(params: ProjectParams, axis: 'x' | 'y', kind: WallKind, gridIndexA: number, gridIndexB: number, from: Point, to: Point): WallSegment {
   const length = axis === 'x' ? Math.abs(to.x - from.x) : Math.abs(to.y - from.y);
   const visibleHeight = kind === 'perimeter' ? params.perimeterFabricHeight : params.innerFabricHeight;
@@ -91,20 +120,23 @@ function buildVerticalSegments(params: ProjectParams, xPositions: number[], yPos
 export function createGeometry(params: ProjectParams): GridGeometry {
   const width = roundMetric((params.K - 1) * params.D);
   const height = roundMetric((params.N - 1) * params.D);
-  const transverseStep = params.P > 0 ? roundMetric(width / (params.P + 1)) : 0;
+  const gridStep = params.P > 0 ? roundMetric(width / (params.P + 1)) : roundMetric(width);
+  const transverseStep = params.P > 0 ? gridStep : 0;
+  const majorXPositions = Array.from({ length: params.K }, (_, index) => roundMetric(index * params.D));
+  const majorYPositions = Array.from({ length: params.N }, (_, index) => roundMetric(index * params.D));
+  const xPositions = buildAxisPositions(width, gridStep);
+  const yPositions = buildAxisPositions(height, gridStep);
 
-  const transverseLines = Array.from({ length: params.P }, (_, index) => ({
+  const transverseLines = xPositions.slice(1, -1).map((x, index) => ({
     id: `transverse-${index}`,
-    x: roundMetric(transverseStep * (index + 1)),
+    x,
   }));
 
-  const longitudinalLines = Array.from({ length: params.N }, (_, index) => ({
+  const longitudinalLines = yPositions.map((y, index) => ({
     id: `longitudinal-${index}`,
-    y: roundMetric(index * params.D),
+    y,
   }));
 
-  const xPositions = [0, ...transverseLines.map((line) => line.x), width];
-  const yPositions = longitudinalLines.map((line) => line.y);
   const segments = [
     ...buildHorizontalSegments(params, xPositions, yPositions, height),
     ...buildVerticalSegments(params, xPositions, yPositions, width),
@@ -113,9 +145,12 @@ export function createGeometry(params: ProjectParams): GridGeometry {
   return {
     width,
     height,
+    gridStep,
     transverseStep,
     transverseLines,
     longitudinalLines,
+    majorXPositions,
+    majorYPositions,
     xPositions,
     yPositions,
     segments,

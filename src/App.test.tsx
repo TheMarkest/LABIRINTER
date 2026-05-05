@@ -21,4 +21,11 @@ describe('App', () => {
     render(<App />);
     expect(screen.getByText(/fabric maze planning console/i)).toBeInTheDocument();
   });
+
+  it('shows controls for scheme title and csv import', () => {
+    render(<App />);
+
+    expect(screen.getByLabelText(/scheme title/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /import csv/i })).toBeInTheDocument();
+  });
 });

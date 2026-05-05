@@ -6,7 +6,7 @@ import { SummaryPanel } from './components/SummaryPanel';
 import { buildExportRows, buildSelectionSummary } from './domain/calculations';
 import { createGeometry } from './domain/geometry';
 import { defaultParams } from './domain/params';
-import type { ProjectParams, WallKind } from './domain/types';
+import type { ImportedSchemeDocument, ProjectParams, WallKind } from './domain/types';
 
 const integerParamKeys = new Set<keyof ProjectParams>(['N', 'K', 'P']);
 
@@ -20,6 +20,8 @@ function coerceParamValue(key: keyof ProjectParams, rawValue: number) {
 
 export default function App() {
   const [params, setParams] = useState<ProjectParams>(defaultParams);
+  const [schemeTitle, setSchemeTitle] = useState('Main montage scheme');
+  const [importNotice, setImportNotice] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const geometry = createGeometry(params);
@@ -34,6 +36,17 @@ export default function App() {
       return next.size === current.size ? current : next;
     });
   }, [geometry.segments]);
+
+  function applyImportedScheme(scheme: ImportedSchemeDocument) {
+    const nextGeometry = createGeometry(scheme.params);
+    const validIds = new Set(nextGeometry.segments.map((segment) => segment.id));
+    const nextSelectedIds = scheme.selectedIds.filter((segmentId) => validIds.has(segmentId));
+
+    setParams(scheme.params);
+    setSchemeTitle(scheme.schemeTitle);
+    setSelectedIds(new Set(nextSelectedIds));
+    setImportNotice(`Imported "${scheme.schemeTitle}" from CSV.`);
+  }
 
   function handleParamChange(key: keyof ProjectParams, rawValue: number) {
     if (!Number.isFinite(rawValue)) {
@@ -86,12 +99,17 @@ export default function App() {
 
   async function handleExportCsv() {
     const { downloadCsvFile } = await import('./domain/exports');
-    downloadCsvFile(exportRows);
+    downloadCsvFile({
+      schemeTitle,
+      params,
+      rows: exportRows,
+    });
   }
 
   async function handleExportPdf() {
     const { exportPdf } = await import('./domain/exports');
     exportPdf({
+      schemeTitle,
       params,
       geometry,
       summary,
@@ -99,13 +117,33 @@ export default function App() {
     });
   }
 
+  async function handleImportCsv(file: File) {
+    try {
+      const { parseCsvContent } = await import('./domain/exports');
+      const content = await file.text();
+      const importedScheme = parseCsvContent(content);
+
+      applyImportedScheme(importedScheme);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not import CSV scheme.';
+      setImportNotice(message);
+    }
+  }
+
   return (
     <div className="app-shell">
-      <AppHeader />
+      <AppHeader schemeTitle={schemeTitle} />
       <div className="app-layout">
         <ParameterPanel
           params={params}
+          schemeTitle={schemeTitle}
+          importNotice={importNotice}
           onChange={handleParamChange}
+          onSchemeTitleChange={(value) => {
+            setSchemeTitle(value);
+            setImportNotice(null);
+          }}
+          onImportCsv={handleImportCsv}
           onSelectPerimeter={() => setSelectionByKind('perimeter')}
           onClearPerimeter={() => clearSelectionByKind('perimeter')}
           onSelectInterior={() => setSelectionByKind('interior')}

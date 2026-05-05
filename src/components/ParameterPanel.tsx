@@ -1,8 +1,13 @@
+import { useRef } from 'react';
 import type { ProjectParams } from '../domain/types';
 
 interface ParameterPanelProps {
   params: ProjectParams;
+  schemeTitle: string;
+  importNotice: string | null;
   onChange: (key: keyof ProjectParams, value: number) => void;
+  onSchemeTitleChange: (value: string) => void;
+  onImportCsv: (file: File) => void | Promise<void>;
   onSelectPerimeter: () => void;
   onClearPerimeter: () => void;
   onSelectInterior: () => void;
@@ -27,14 +32,60 @@ const parameterFields: Array<{
 
 export function ParameterPanel({
   params,
+  schemeTitle,
+  importNotice,
   onChange,
+  onSchemeTitleChange,
+  onImportCsv,
   onSelectPerimeter,
   onClearPerimeter,
   onSelectInterior,
   onClearAll,
 }: ParameterPanelProps) {
+  const importInputRef = useRef<HTMLInputElement>(null);
+
   return (
     <aside className="control-panel">
+      <div className="panel-card">
+        <h2>Scheme</h2>
+        <div className="field-grid">
+          <label className="field">
+            <span>Scheme title</span>
+            <input
+              type="text"
+              value={schemeTitle}
+              placeholder="Untitled scheme"
+              onChange={(event) => onSchemeTitleChange(event.target.value)}
+            />
+          </label>
+        </div>
+
+        <div className="action-grid action-grid--scheme">
+          <button type="button" onClick={() => importInputRef.current?.click()}>
+            Import CSV
+          </button>
+        </div>
+
+        <input
+          ref={importInputRef}
+          type="file"
+          accept=".csv,text/csv"
+          aria-label="Import scheme CSV"
+          className="visually-hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+
+            if (file) {
+              void onImportCsv(file);
+            }
+
+            event.target.value = '';
+          }}
+        />
+
+        {importNotice ? <p className="panel-note">{importNotice}</p> : null}
+      </div>
+
       <div className="panel-card">
         <h2>Structure</h2>
         <div className="field-grid">

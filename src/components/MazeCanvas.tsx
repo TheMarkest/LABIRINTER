@@ -19,6 +19,8 @@ export function MazeCanvas({ geometry, selectedIds, onToggle }: MazeCanvasProps)
   const padding = 44;
   const width = geometry.width * scale + padding * 2;
   const height = geometry.height * scale + padding * 2;
+  const xLabelStride = geometry.gridStep > 0 ? Math.max(1, Math.ceil(72 / (geometry.gridStep * scale))) : 1;
+  const yLabelStride = geometry.gridStep > 0 ? Math.max(1, Math.ceil(56 / (geometry.gridStep * scale))) : 1;
   const toSvgX = (x: number) => padding + x * scale;
   const toSvgY = (y: number) => height - padding - y * scale;
 
@@ -46,14 +48,14 @@ export function MazeCanvas({ geometry, selectedIds, onToggle }: MazeCanvasProps)
         >
           <rect x="0" y="0" width={width} height={height} rx="18" className="maze-canvas__frame" />
 
-          {geometry.longitudinalLines.map((line) => (
+          {geometry.yPositions.map((y, index) => (
             <line
-              key={line.id}
+              key={`horizontal-${index}`}
               x1={toSvgX(0)}
-              y1={toSvgY(line.y)}
+              y1={toSvgY(y)}
               x2={toSvgX(geometry.width)}
-              y2={toSvgY(line.y)}
-              className="maze-canvas__guide maze-canvas__guide--major"
+              y2={toSvgY(y)}
+              className="maze-canvas__guide"
             />
           ))}
 
@@ -64,7 +66,29 @@ export function MazeCanvas({ geometry, selectedIds, onToggle }: MazeCanvasProps)
               y1={toSvgY(0)}
               x2={toSvgX(x)}
               y2={toSvgY(geometry.height)}
-              className={index === 0 || index === geometry.xPositions.length - 1 ? 'maze-canvas__guide maze-canvas__guide--major' : 'maze-canvas__guide'}
+              className="maze-canvas__guide"
+            />
+          ))}
+
+          {geometry.majorYPositions.map((y, index) => (
+            <line
+              key={`major-horizontal-${index}`}
+              x1={toSvgX(0)}
+              y1={toSvgY(y)}
+              x2={toSvgX(geometry.width)}
+              y2={toSvgY(y)}
+              className="maze-canvas__guide maze-canvas__guide--major"
+            />
+          ))}
+
+          {geometry.majorXPositions.map((x, index) => (
+            <line
+              key={`major-vertical-${index}`}
+              x1={toSvgX(x)}
+              y1={toSvgY(0)}
+              x2={toSvgX(x)}
+              y2={toSvgY(geometry.height)}
+              className="maze-canvas__guide maze-canvas__guide--major"
             />
           ))}
 
@@ -92,28 +116,33 @@ export function MazeCanvas({ geometry, selectedIds, onToggle }: MazeCanvasProps)
             );
           })}
 
-          {geometry.longitudinalLines.map((line, index) => (
-            <text
-              key={`label-y-${line.id}`}
-              x={12}
-              y={toSvgY(line.y) + 4}
-              className="maze-canvas__label"
-            >
-              Y{index}: {line.y}m
-            </text>
-          ))}
+          {geometry.yPositions.map((y, index) =>
+            index === 0 || index === geometry.yPositions.length - 1 || index % yLabelStride === 0 ? (
+              <text
+                key={`label-y-${index}`}
+                x={14}
+                y={toSvgY(y) + 4}
+                className="maze-canvas__label"
+              >
+                Y{index}: {y}m
+              </text>
+            ) : null,
+          )}
 
-          {geometry.xPositions.map((x, index) => (
-            <text
-              key={`label-x-${index}`}
-              x={toSvgX(x)}
-              y={height - 12}
-              textAnchor="middle"
-              className="maze-canvas__label"
-            >
-              X{index}: {x}m
-            </text>
-          ))}
+          {geometry.xPositions.map((x, index) =>
+            index === 0 || index === geometry.xPositions.length - 1 || index % xLabelStride === 0 ? (
+              <text
+                key={`label-x-${index}`}
+                x={toSvgX(x)}
+                y={height - 12}
+                textAnchor="end"
+                transform={`rotate(-35 ${toSvgX(x)} ${height - 12})`}
+                className="maze-canvas__label"
+              >
+                X{index}: {x}m
+              </text>
+            ) : null,
+          )}
         </svg>
       </div>
     </section>

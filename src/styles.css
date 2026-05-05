@@ -98,6 +98,14 @@ button {
   line-height: 0.95;
 }
 
+.app-header__scheme-title {
+  margin: 0.6rem 0 0;
+  color: var(--accent);
+  font-family: 'Rockwell', 'Georgia', serif;
+  font-size: clamp(1.05rem, 2vw, 1.45rem);
+  letter-spacing: 0.04em;
+}
+
 .app-header__lede {
   max-width: 44rem;
   margin: 0.85rem 0 0;
@@ -184,6 +192,10 @@ button {
   gap: 0.65rem;
 }
 
+.action-grid--scheme {
+  margin-top: 0.9rem;
+}
+
 .action-grid button {
   border: 1px solid rgba(237, 174, 72, 0.34);
   border-radius: 999px;
@@ -258,7 +270,7 @@ button {
 
 .maze-canvas__label {
   fill: rgba(213, 194, 154, 0.7);
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.06em;
 }
 
@@ -306,6 +318,25 @@ button {
 
 .action-grid--exports {
   margin-top: 1rem;
+}
+
+.panel-note {
+  margin: 0.85rem 0 0;
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 @media (max-width: 1100px) {
