@@ -49,3 +49,30 @@ export interface GridGeometry {
   yPositions: number[];
   segments: WallSegment[];
 }
+
+export interface MaterialSummary {
+  selectedCount: number;
+  interiorCount: number;
+  perimeterCount: number;
+  totalLength: number;
+  totalVisibleArea: number;
+  totalCutArea: number;
+}
+
+export interface ExportRow {
+  id: string;
+  kind: WallKind;
+  axis: Axis;
+  gridIndexA: number;
+  gridIndexB: number;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  length: number;
+  visibleHeight: number;
+  cutWidth: number;
+  cutHeight: number;
+  visibleArea: number;
+  cutArea: number;
+}
