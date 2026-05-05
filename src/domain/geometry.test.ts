@@ -30,4 +30,15 @@ describe('createGeometry', () => {
     expect(geometry.segments.some((segment) => segment.kind === 'perimeter')).toBe(true);
     expect(geometry.segments.some((segment) => segment.kind === 'interior')).toBe(true);
   });
+
+  it('assigns cell-side wall codes that can describe a wall as A4L style references', () => {
+    const geometry = createGeometry(defaultParams);
+    const leftPerimeter = geometry.segments.find((segment) => segment.id === 'y-0-0');
+    const firstInteriorVertical = geometry.segments.find((segment) => segment.id === 'y-1-0');
+    const firstInteriorHorizontal = geometry.segments.find((segment) => segment.id === 'x-1-0');
+
+    expect((leftPerimeter as { code?: string } | undefined)?.code).toBe('A1L');
+    expect((firstInteriorVertical as { code?: string } | undefined)?.code).toBe('A1R');
+    expect((firstInteriorHorizontal as { code?: string } | undefined)?.code).toBe('A1T');
+  });
 });

@@ -32,6 +32,7 @@ describe('buildExportRows', () => {
 
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
+      code: (segment as { code?: string }).code,
       id: segment.id,
       kind: segment.kind,
       axis: segment.axis,

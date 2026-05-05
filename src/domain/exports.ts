@@ -1,9 +1,13 @@
 import { jsPDF } from 'jspdf';
+import { buildColumnBandLabels, buildRowBandLabels } from './addressing';
 import { defaultParams } from './params';
 import type { CsvSchemeDocument, ExportRow, ExportScene, ImportedSchemeDocument, ProjectParams } from './types';
 
 const csvColumns: Array<keyof ExportRow> = [
+  'code',
   'id',
+  'cell',
+  'side',
   'kind',
   'axis',
   'gridIndexA',
@@ -115,18 +119,6 @@ function createSchemeFilename(schemeTitle: string, extension: 'csv' | 'pdf') {
   return `${slug || 'labirinter-scheme'}.${extension}`;
 }
 
-function getAxisLabelStride(gridStep: number, scale: number) {
-  if (gridStep <= 0) {
-    return 1;
-  }
-
-  return Math.max(1, Math.ceil(72 / (gridStep * scale)));
-}
-
-function shouldRenderAxisLabel(index: number, total: number, stride: number) {
-  return index === 0 || index === total - 1 || index % stride === 0;
-}
-
 function drawPlanPage(doc: jsPDF, scene: ExportScene) {
   const { geometry, params, rows, schemeTitle, summary } = scene;
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -137,8 +129,8 @@ function drawPlanPage(doc: jsPDF, scene: ExportScene) {
   const scale = Math.min(planWidth / Math.max(geometry.width, 1), planHeight / Math.max(geometry.height, 1));
   const marginX = planLeft + (planWidth - geometry.width * scale) / 2;
   const marginY = planTop + (planHeight - geometry.height * scale) / 2;
-  const xLabelStride = getAxisLabelStride(geometry.gridStep, scale);
-  const yLabelStride = getAxisLabelStride(geometry.gridStep, scale);
+  const columnLabels = buildColumnBandLabels(geometry.xPositions);
+  const rowLabels = buildRowBandLabels(geometry.yPositions);
   const toPdfX = (x: number) => marginX + x * scale;
   const toPdfY = (y: number) => marginY + planHeight - y * scale;
 
@@ -229,17 +221,29 @@ function drawPlanPage(doc: jsPDF, scene: ExportScene) {
     doc.line(toPdfX(row.startX), toPdfY(row.startY), toPdfX(row.endX), toPdfY(row.endY));
   });
 
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(5.4);
   doc.setTextColor(240, 223, 184);
-  doc.setFontSize(7);
-  geometry.xPositions.forEach((x, index) => {
-    if (shouldRenderAxisLabel(index, geometry.xPositions.length, xLabelStride)) {
-      doc.text(`${formatNumber(x)}m`, toPdfX(x), planTop + planHeight + 7, { align: 'center' });
-    }
+  columnLabels.forEach((label) => {
+    doc.text(label.primary, toPdfX(label.center), planTop + planHeight + 6, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(4.2);
+    doc.setTextColor(177, 158, 122);
+    doc.text(label.metric, toPdfX(label.center), planTop + planHeight + 10, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(5.4);
+    doc.setTextColor(240, 223, 184);
   });
-  geometry.yPositions.forEach((y, index) => {
-    if (shouldRenderAxisLabel(index, geometry.yPositions.length, yLabelStride)) {
-      doc.text(`${formatNumber(y)}m`, planLeft - 4, toPdfY(y) + 1, { align: 'right' });
-    }
+
+  rowLabels.forEach((label) => {
+    doc.text(label.primary, planLeft - 6, toPdfY(label.center) - 0.4, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(4.2);
+    doc.setTextColor(177, 158, 122);
+    doc.text(label.metric, planLeft - 6, toPdfY(label.center) + 3, { align: 'right' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(5.4);
+    doc.setTextColor(240, 223, 184);
   });
 }
 
@@ -254,15 +258,14 @@ function drawTableHeader(doc: jsPDF, pageNumber: number, schemeTitle: string) {
   doc.setFont('helvetica', 'normal');
   doc.text(schemeTitle || 'Untitled scheme', 14, 27);
   doc.text(`Page ${pageNumber}`, 180, 20, { align: 'right' });
-  doc.text('ID', 14, 36);
-  doc.text('Kind', 34, 36);
-  doc.text('Axis', 54, 36);
-  doc.text('Idx', 68, 36);
-  doc.text('Start', 84, 36);
-  doc.text('End', 116, 36);
-  doc.text('Len', 148, 36);
-  doc.text('H', 160, 36);
-  doc.text('Area', 171, 36);
+  doc.text('Code', 14, 36);
+  doc.text('Kind', 31, 36);
+  doc.text('Axis', 51, 36);
+  doc.text('Start', 63, 36);
+  doc.text('End', 95, 36);
+  doc.text('Len', 127, 36);
+  doc.text('H', 139, 36);
+  doc.text('Area', 150, 36);
   doc.text('Cut', 188, 36, { align: 'right' });
   doc.setDrawColor(157, 129, 84);
   doc.line(14, 39, 190, 39);
@@ -275,15 +278,14 @@ function drawRowsPage(doc: jsPDF, rows: ExportRow[], pageNumber: number, schemeT
 
   rows.forEach((row, index) => {
     const y = 46 + index * 8;
-    doc.text(row.id, 14, y);
-    doc.text(row.kind, 34, y);
-    doc.text(row.axis, 54, y);
-    doc.text(`${row.gridIndexA}/${row.gridIndexB}`, 68, y);
-    doc.text(`${formatNumber(row.startX)},${formatNumber(row.startY)}`, 84, y);
-    doc.text(`${formatNumber(row.endX)},${formatNumber(row.endY)}`, 116, y);
-    doc.text(formatNumber(row.length), 148, y);
-    doc.text(formatNumber(row.visibleHeight), 160, y);
-    doc.text(formatNumber(row.visibleArea), 171, y);
+    doc.text(row.code, 14, y);
+    doc.text(row.kind, 31, y);
+    doc.text(row.axis, 51, y);
+    doc.text(`${formatNumber(row.startX)},${formatNumber(row.startY)}`, 63, y);
+    doc.text(`${formatNumber(row.endX)},${formatNumber(row.endY)}`, 95, y);
+    doc.text(formatNumber(row.length), 127, y);
+    doc.text(formatNumber(row.visibleHeight), 139, y);
+    doc.text(formatNumber(row.visibleArea), 150, y);
     doc.text(formatNumber(row.cutArea), 188, y, { align: 'right' });
   });
 }
@@ -342,7 +344,7 @@ export function parseCsvContent(content: string): ImportedSchemeDocument {
       return;
     }
 
-    if (columns[0] === 'id') {
+    if (columns[0] === 'id' || columns[0] === 'code') {
       headerColumns = columns;
       return;
     }
@@ -358,6 +360,18 @@ export function parseCsvContent(content: string): ImportedSchemeDocument {
       const rawValue = columns[index] ?? '';
       rowDraft[key] = (numericExportColumns.has(key) ? Number(rawValue) : rawValue) as ExportRow[keyof ExportRow];
     });
+
+    if (!('code' in rowDraft) || typeof rowDraft.code !== 'string' || rowDraft.code.length === 0) {
+      rowDraft.code = String(rowDraft.id ?? '');
+    }
+
+    if (!('cell' in rowDraft) || typeof rowDraft.cell !== 'string' || rowDraft.cell.length === 0) {
+      rowDraft.cell = String(rowDraft.code ?? '');
+    }
+
+    if (!('side' in rowDraft) || typeof rowDraft.side !== 'string' || rowDraft.side.length === 0) {
+      rowDraft.side = String(rowDraft.code ?? '').slice(-1) as ExportRow['side'];
+    }
 
     rows.push(rowDraft as ExportRow);
   });

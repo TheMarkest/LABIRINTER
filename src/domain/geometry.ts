@@ -1,3 +1,4 @@
+import { getWallAddress } from './addressing';
 import type { GridGeometry, Point, ProjectParams, WallKind, WallSegment } from './types';
 
 function roundMetric(value: number) {
@@ -47,9 +48,28 @@ function createSegment(params: ProjectParams, axis: 'x' | 'y', kind: WallKind, g
   const cutHeight = roundMetric(visibleHeight + params.bendAllowancePerEdge * 2);
   const visibleArea = roundMetric(length * visibleHeight);
   const cutArea = roundMetric(cutWidth * cutHeight);
+  const id = `${axis}-${gridIndexA}-${gridIndexB}`;
+  const address = getWallAddress({
+    id,
+    axis,
+    kind,
+    gridIndexA,
+    gridIndexB,
+    from,
+    to,
+    length: roundMetric(length),
+    visibleHeight: roundMetric(visibleHeight),
+    cutWidth,
+    cutHeight,
+    visibleArea,
+    cutArea,
+  } as WallSegment);
 
   return {
-    id: `${axis}-${gridIndexA}-${gridIndexB}`,
+    id,
+    code: address.code,
+    cell: address.cell,
+    side: address.side,
     kind,
     axis,
     gridIndexA,

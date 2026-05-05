@@ -38,6 +38,9 @@ export function buildExportRows(geometry: GridGeometry, selectedIds: Set<string>
     .filter((segment) => selectedIds.has(segment.id))
     .map((segment) => ({
       id: segment.id,
+      code: segment.code,
+      cell: segment.cell,
+      side: segment.side,
       kind: segment.kind,
       axis: segment.axis,
       gridIndexA: segment.gridIndexA,

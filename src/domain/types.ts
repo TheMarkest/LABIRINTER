@@ -1,5 +1,6 @@
 export type Axis = 'x' | 'y';
 export type WallKind = 'interior' | 'perimeter';
+export type WallSide = 'L' | 'R' | 'T' | 'B';
 
 export interface Point {
   x: number;
@@ -25,6 +26,9 @@ export interface LineMarker {
 
 export interface WallSegment {
   id: string;
+  code: string;
+  cell: string;
+  side: WallSide;
   kind: WallKind;
   axis: Axis;
   gridIndexA: number;
@@ -64,6 +68,9 @@ export interface MaterialSummary {
 
 export interface ExportRow {
   id: string;
+  code: string;
+  cell: string;
+  side: WallSide;
   kind: WallKind;
   axis: Axis;
   gridIndexA: number;

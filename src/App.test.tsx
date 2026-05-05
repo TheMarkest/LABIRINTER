@@ -32,7 +32,7 @@ describe('App', () => {
   it('adds perimeter selection to existing selected walls', () => {
     render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: /segment x-1-0/i }));
+    fireEvent.click(screen.getByRole('button', { name: /segment a1t/i }));
     fireEvent.click(screen.getByRole('button', { name: /select perimeter/i }));
 
     expect(screen.getByText(/Selected walls/i)).toHaveTextContent('13');

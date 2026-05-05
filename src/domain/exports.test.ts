@@ -7,7 +7,10 @@ describe('buildCsvContent', () => {
   it('includes coordinate and area columns', () => {
     const rows: ExportRow[] = [
       {
+        code: 'A2T',
         id: 'seg-1',
+        cell: 'A2',
+        side: 'T',
         kind: 'interior',
         axis: 'x',
         gridIndexA: 1,
@@ -32,9 +35,10 @@ describe('buildCsvContent', () => {
     });
 
     expect(csv).toContain(
-      'id,kind,axis,gridIndexA,gridIndexB,startX,startY,endX,endY,length,visibleHeight,cutWidth,cutHeight,visibleArea,cutArea',
+      'code,id,cell,side,kind,axis,gridIndexA,gridIndexB,startX,startY,endX,endY,length,visibleHeight,cutWidth,cutHeight,visibleArea,cutArea',
     );
     expect(csv).toContain('meta,schemeTitle,North Maze');
+    expect(csv).toContain('A2T');
     expect(csv).toContain('seg-1');
     expect(csv).toContain('11.96');
   });
@@ -42,7 +46,10 @@ describe('buildCsvContent', () => {
   it('round-trips scheme title, params, and selected rows from csv', () => {
     const rows: ExportRow[] = [
       {
+        code: 'A2T',
         id: 'seg-1',
+        cell: 'A2',
+        side: 'T',
         kind: 'interior',
         axis: 'x',
         gridIndexA: 1,

@@ -1,22 +1,11 @@
 import type { KeyboardEvent } from 'react';
+import { buildColumnBandLabels, buildRowBandLabels } from '../domain/addressing';
 import type { GridGeometry } from '../domain/types';
 
 interface MazeCanvasProps {
   geometry: GridGeometry;
   selectedIds: Set<string>;
   onToggle: (segmentId: string) => void;
-}
-
-function getAxisTextAnchor(index: number, total: number) {
-  if (index === 0) {
-    return 'start';
-  }
-
-  if (index === total - 1) {
-    return 'end';
-  }
-
-  return 'middle';
 }
 
 function handleKeyboardToggle(event: KeyboardEvent<SVGGElement>, onToggle: () => void) {
@@ -31,11 +20,13 @@ export function MazeCanvas({ geometry, selectedIds, onToggle }: MazeCanvasProps)
   const padding = {
     top: 22,
     right: 40,
-    bottom: 54,
-    left: 58,
+    bottom: 68,
+    left: 78,
   };
   const width = geometry.width * scale + padding.left + padding.right;
   const height = geometry.height * scale + padding.top + padding.bottom;
+  const columnLabels = buildColumnBandLabels(geometry.xPositions);
+  const rowLabels = buildRowBandLabels(geometry.yPositions);
   const toSvgX = (x: number) => padding.left + x * scale;
   const toSvgY = (y: number) => height - padding.bottom - y * scale;
 
@@ -115,7 +106,7 @@ export function MazeCanvas({ geometry, selectedIds, onToggle }: MazeCanvasProps)
                 key={segment.id}
                 role="button"
                 tabIndex={0}
-                aria-label={`segment ${segment.id}`}
+                aria-label={`segment ${segment.code}`}
                 className={`maze-segment ${selected ? 'maze-segment--selected' : ''} maze-segment--${segment.kind}`}
                 onClick={() => onToggle(segment.id)}
                 onKeyDown={(event) => handleKeyboardToggle(event, () => onToggle(segment.id))}
@@ -131,28 +122,45 @@ export function MazeCanvas({ geometry, selectedIds, onToggle }: MazeCanvasProps)
             );
           })}
 
-          {geometry.yPositions.map((y, index) => (
+          {rowLabels.map((label) => (
             <text
-              key={`label-y-${index}`}
-              x={padding.left - 10}
-              y={toSvgY(y)}
+              key={`label-y-${label.index}`}
+              x={padding.left - 12}
+              y={toSvgY(label.center) - 2}
               textAnchor="end"
-              dominantBaseline="middle"
-              className="maze-canvas__label maze-canvas__label--y"
+              className="maze-canvas__label maze-canvas__axis-label maze-canvas__axis-label--y"
             >
-              Y{index}: {y}m
+              <tspan x={padding.left - 12} className="maze-canvas__axis-primary">
+                {label.primary}
+              </tspan>
+              <tspan
+                x={padding.left - 12}
+                dy="8"
+                className="maze-canvas__axis-metric"
+              >
+                {label.metric}
+              </tspan>
             </text>
           ))}
 
-          {geometry.xPositions.map((x, index) => (
+          {columnLabels.map((label) => (
             <text
-              key={`label-x-${index}`}
-              x={toSvgX(x)}
-              y={height - 18}
-              textAnchor={getAxisTextAnchor(index, geometry.xPositions.length)}
-              className="maze-canvas__label maze-canvas__label--x"
+              key={`label-x-${label.index}`}
+              x={toSvgX(label.center)}
+              y={height - 24}
+              textAnchor="middle"
+              className="maze-canvas__label maze-canvas__axis-label maze-canvas__axis-label--x"
             >
-              X{index}: {x}m
+              <tspan x={toSvgX(label.center)} className="maze-canvas__axis-primary">
+                {label.primary}
+              </tspan>
+              <tspan
+                x={toSvgX(label.center)}
+                dy="9"
+                className="maze-canvas__axis-metric"
+              >
+                {label.metric}
+              </tspan>
             </text>
           ))}
         </svg>

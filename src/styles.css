@@ -269,17 +269,29 @@ button {
 }
 
 .maze-canvas__label {
-  fill: rgba(213, 194, 154, 0.7);
+  fill: rgba(223, 204, 164, 0.82);
   font-size: 8px;
   letter-spacing: 0.02em;
 }
 
-.maze-canvas__label--x {
-  fill: rgba(220, 201, 160, 0.78);
+.maze-canvas__axis-primary {
+  fill: rgba(240, 223, 184, 0.86);
+  font-size: 8px;
+  font-weight: 700;
 }
 
-.maze-canvas__label--y {
-  fill: rgba(213, 194, 154, 0.72);
+.maze-canvas__axis-metric {
+  fill: rgba(181, 162, 126, 0.54);
+  font-size: 6px;
+  letter-spacing: 0.01em;
+}
+
+.maze-canvas__axis-label--x {
+  dominant-baseline: hanging;
+}
+
+.maze-canvas__axis-label--y {
+  dominant-baseline: hanging;
 }
 
 .maze-segment {
