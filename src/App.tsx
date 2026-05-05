@@ -4,7 +4,9 @@ import { MazeCanvas } from './components/MazeCanvas';
 import { ParameterPanel } from './components/ParameterPanel';
 import { SummaryPanel } from './components/SummaryPanel';
 import { buildSelectionSummary } from './domain/calculations';
+import { buildExportRows } from './domain/calculations';
 import { createGeometry } from './domain/geometry';
+import { downloadCsvFile, exportPdf } from './domain/exports';
 import { defaultParams } from './domain/params';
 import type { ProjectParams, WallKind } from './domain/types';
 
@@ -24,6 +26,7 @@ export default function App() {
 
   const geometry = createGeometry(params);
   const summary = buildSelectionSummary(geometry, selectedIds);
+  const exportRows = buildExportRows(geometry, selectedIds);
 
   useEffect(() => {
     const validIds = new Set(geometry.segments.map((segment) => segment.id));
@@ -83,6 +86,19 @@ export default function App() {
     setSelectedIds(new Set());
   }
 
+  function handleExportCsv() {
+    downloadCsvFile(exportRows);
+  }
+
+  function handleExportPdf() {
+    exportPdf({
+      params,
+      geometry,
+      summary,
+      rows: exportRows,
+    });
+  }
+
   return (
     <div className="app-shell">
       <AppHeader />
@@ -96,7 +112,12 @@ export default function App() {
           onClearAll={clearAll}
         />
         <MazeCanvas geometry={geometry} selectedIds={selectedIds} onToggle={toggleSegment} />
-        <SummaryPanel summary={summary} />
+        <SummaryPanel
+          summary={summary}
+          hasSelection={summary.selectedCount > 0}
+          onExportCsv={handleExportCsv}
+          onExportPdf={handleExportPdf}
+        />
       </div>
     </div>
   );

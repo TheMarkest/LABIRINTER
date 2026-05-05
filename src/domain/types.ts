@@ -76,3 +76,10 @@ export interface ExportRow {
   visibleArea: number;
   cutArea: number;
 }
+
+export interface ExportScene {
+  params: ProjectParams;
+  geometry: GridGeometry;
+  summary: MaterialSummary;
+  rows: ExportRow[];
+}
