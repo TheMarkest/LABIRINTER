@@ -22,6 +22,7 @@ The first version is designed around an SVG editor backed by a renderer-agnostic
 - Support a single bend allowance value applied per fabric edge for fastening
 - Let the user toggle individual wall segments on a grid
 - Generate deterministic calculations and exports from a single shared scene model
+- Present a visual style inspired by classic GDevelop tools and `Black Mirror: Bandersnatch`
 
 ## Non-Goals For Version 1
 
@@ -181,6 +182,19 @@ Version 1 should include:
 Optional if implementation cost stays low:
 
 - drag or paint selection along a line
+
+## Visual Direction
+
+The first prototype should avoid generic dashboard styling.
+
+- palette: muted amber, brass, soot, parchment, and oxidized gold accents
+- mood: editorial, analog control room, retro-futurist production interface
+- typography: strong display heading paired with readable condensed or humanist UI text
+- surfaces: layered panels, grain, subtle gradients, framed editor region
+- signals: selected segments should feel illuminated and intentional rather than default blue
+- overall feel: part level editor, part production planning console
+
+The result should feel closer to an old creative tool or experimental film interface than a standard admin panel.
 
 ## Rendering Approach
 
