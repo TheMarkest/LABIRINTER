@@ -28,4 +28,15 @@ describe('App', () => {
     expect(screen.getByLabelText(/scheme title/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /import csv/i })).toBeInTheDocument();
   });
+
+  it('adds perimeter selection to existing selected walls', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: /segment x-1-0/i }));
+    fireEvent.click(screen.getByRole('button', { name: /select perimeter/i }));
+
+    expect(screen.getByText(/Selected walls/i)).toHaveTextContent('13');
+    expect(screen.getByText(/Interior walls/i)).toHaveTextContent('1');
+    expect(screen.getByText(/Perimeter walls/i)).toHaveTextContent('12');
+  });
 });

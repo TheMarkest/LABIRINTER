@@ -74,9 +74,17 @@ export default function App() {
   }
 
   function setSelectionByKind(kind: WallKind) {
-    setSelectedIds(
-      new Set(geometry.segments.filter((segment) => segment.kind === kind).map((segment) => segment.id)),
-    );
+    setSelectedIds((current) => {
+      const next = new Set(current);
+
+      geometry.segments.forEach((segment) => {
+        if (segment.kind === kind) {
+          next.add(segment.id);
+        }
+      });
+
+      return next;
+    });
   }
 
   function clearSelectionByKind(kind: WallKind) {
