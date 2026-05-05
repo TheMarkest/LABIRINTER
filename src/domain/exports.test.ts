@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ExportRow } from './types';
-import { buildCsvContent, buildPdfPlanLayout, parseCsvContent } from './exports';
+import { buildCsvContent, buildPdfPlanLayout, getPdfPalette, getTableInstructionSections, parseCsvContent } from './exports';
 import { createGeometry } from './geometry';
 import { defaultParams } from './params';
 
@@ -91,5 +91,20 @@ describe('buildCsvContent', () => {
     expect(layout.plotBottom).toBeLessThan(layout.frame.top + layout.frame.height);
     expect(layout.toPdfY(0)).toBe(layout.plotBottom);
     expect(layout.toPdfY(geometry.height)).toBe(layout.plotTop);
+  });
+
+  it('provides bilingual table instructions and a grayscale print palette for pdf export', () => {
+    const instructions = getTableInstructionSections();
+    const palette = getPdfPalette();
+
+    expect(instructions).toHaveLength(2);
+    expect(instructions[0].title).toMatch(/\u041a\u0430\u043a \u0447\u0438\u0442\u0430\u0442\u044c \u0442\u0430\u0431\u043b\u0438\u0446\u0443/i);
+    expect(instructions[0].lines.join(' ')).toContain('A4L');
+    expect(instructions[1].title).toMatch(/How to read the table/i);
+
+    Object.values(palette).forEach((tone) => {
+      expect(tone[0]).toBe(tone[1]);
+      expect(tone[1]).toBe(tone[2]);
+    });
   });
 });

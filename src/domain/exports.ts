@@ -1,6 +1,8 @@
+import { pdfTableInstructionSections } from '../content/instructions';
 import { jsPDF } from 'jspdf';
 import { buildColumnBandLabels, buildRowBandLabels } from './addressing';
 import { defaultParams } from './params';
+import { notoSansRegularBase64 } from './pdfNotoSansBase64';
 import type { CsvSchemeDocument, ExportRow, ExportScene, GridGeometry, ImportedSchemeDocument, ProjectParams } from './types';
 
 const csvColumns: Array<keyof ExportRow> = [
@@ -49,6 +51,44 @@ const numericExportColumns = new Set<keyof ExportRow>([
   'visibleArea',
   'cutArea',
 ]);
+
+const pdfPalette = {
+  page: [255, 255, 255] as const,
+  ink: [0, 0, 0] as const,
+  muted: [110, 110, 110] as const,
+  border: [60, 60, 60] as const,
+  grid: [210, 210, 210] as const,
+  gridMajor: [150, 150, 150] as const,
+  wall: [0, 0, 0] as const,
+};
+
+export function getPdfPalette() {
+  return pdfPalette;
+}
+
+export function getTableInstructionSections() {
+  return pdfTableInstructionSections;
+}
+
+function setDrawGray(doc: jsPDF, tone: readonly [number, number, number]) {
+  doc.setDrawColor(tone[0], tone[1], tone[2]);
+}
+
+function setTextGray(doc: jsPDF, tone: readonly [number, number, number]) {
+  doc.setTextColor(tone[0], tone[1], tone[2]);
+}
+
+function ensurePdfFont(doc: jsPDF) {
+  const fontList = doc.getFontList() as Record<string, string[]>;
+
+  if (!fontList.NotoSans) {
+    doc.addFileToVFS('NotoSans-Regular.ttf', notoSansRegularBase64);
+    doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+    doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'bold');
+  }
+
+  doc.setFont('NotoSans', 'normal');
+}
 
 function triggerDownload(filename: string, mimeType: string, content: BlobPart) {
   const blob = new Blob([content], { type: mimeType });
@@ -164,25 +204,25 @@ function drawPlanPage(doc: jsPDF, scene: ExportScene) {
   const columnLabels = buildColumnBandLabels(geometry.xPositions);
   const rowLabels = buildRowBandLabels(geometry.yPositions);
 
-  doc.setFillColor(20, 16, 12);
-  doc.rect(10, 10, pageWidth - 20, 277, 'F');
+  doc.setFillColor(pdfPalette.page[0], pdfPalette.page[1], pdfPalette.page[2]);
+  doc.rect(0, 0, pageWidth, doc.internal.pageSize.getHeight(), 'F');
 
-  doc.setTextColor(240, 223, 184);
-  doc.setFont('helvetica', 'bold');
+  setTextGray(doc, pdfPalette.ink);
+  doc.setFont('NotoSans', 'bold');
   doc.setFontSize(22);
   doc.text('LABIRINTER', 16, 24);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('NotoSans', 'normal');
   doc.setFontSize(10);
   doc.text('Fabric maze planning console', 16, 31);
   doc.setFontSize(14);
   doc.text(schemeTitle || 'Untitled scheme', 16, 39);
 
-  doc.setDrawColor(157, 129, 84);
-  doc.roundedRect(14, 48, 80, 92, 4, 4);
-  doc.setFont('helvetica', 'bold');
+  setDrawGray(doc, pdfPalette.border);
+  doc.rect(14, 48, 80, 92);
+  doc.setFont('NotoSans', 'bold');
   doc.setFontSize(11);
   doc.text('Project Parameters', 18, 57);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('NotoSans', 'normal');
   doc.setFontSize(9);
 
   const parameterLines = [
@@ -201,11 +241,11 @@ function drawPlanPage(doc: jsPDF, scene: ExportScene) {
     doc.text(line, 18, 65 + index * 7);
   });
 
-  doc.roundedRect(14, 146, 80, 64, 4, 4);
-  doc.setFont('helvetica', 'bold');
+  doc.rect(14, 146, 80, 64);
+  doc.setFont('NotoSans', 'bold');
   doc.setFontSize(11);
   doc.text('Material Summary', 18, 155);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('NotoSans', 'normal');
   doc.setFontSize(9);
 
   const summaryLines = [
@@ -221,13 +261,13 @@ function drawPlanPage(doc: jsPDF, scene: ExportScene) {
     doc.text(line, 18, 164 + index * 8);
   });
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('NotoSans', 'bold');
   doc.setFontSize(11);
   doc.text('Plan View', layout.frame.left, 20);
-  doc.setDrawColor(157, 129, 84);
-  doc.roundedRect(layout.frame.left, layout.frame.top, layout.frame.width, layout.frame.height, 4, 4);
+  setDrawGray(doc, pdfPalette.border);
+  doc.rect(layout.frame.left, layout.frame.top, layout.frame.width, layout.frame.height);
 
-  doc.setDrawColor(74, 64, 51);
+  setDrawGray(doc, pdfPalette.grid);
   doc.setLineWidth(0.18);
   geometry.yPositions.forEach((y) => {
     doc.line(layout.toPdfX(0), layout.toPdfY(y), layout.toPdfX(geometry.width), layout.toPdfY(y));
@@ -236,7 +276,7 @@ function drawPlanPage(doc: jsPDF, scene: ExportScene) {
     doc.line(layout.toPdfX(x), layout.toPdfY(0), layout.toPdfX(x), layout.toPdfY(geometry.height));
   });
 
-  doc.setDrawColor(129, 102, 64);
+  setDrawGray(doc, pdfPalette.gridMajor);
   doc.setLineWidth(0.38);
   geometry.majorYPositions.forEach((y) => {
     doc.line(layout.toPdfX(0), layout.toPdfY(y), layout.toPdfX(geometry.width), layout.toPdfY(y));
@@ -245,69 +285,96 @@ function drawPlanPage(doc: jsPDF, scene: ExportScene) {
     doc.line(layout.toPdfX(x), layout.toPdfY(0), layout.toPdfX(x), layout.toPdfY(geometry.height));
   });
 
-  doc.setDrawColor(240, 174, 67);
+  setDrawGray(doc, pdfPalette.wall);
   doc.setLineWidth(1.2);
   rows.forEach((row) => {
     doc.line(layout.toPdfX(row.startX), layout.toPdfY(row.startY), layout.toPdfX(row.endX), layout.toPdfY(row.endY));
   });
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('NotoSans', 'bold');
   doc.setFontSize(5.4);
-  doc.setTextColor(240, 223, 184);
+  setTextGray(doc, pdfPalette.ink);
   columnLabels.forEach((label) => {
     doc.text(label.primary, layout.toPdfX(label.center), layout.plotBottom + 5.5, { align: 'center' });
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans', 'normal');
     doc.setFontSize(4.2);
-    doc.setTextColor(177, 158, 122);
+    setTextGray(doc, pdfPalette.muted);
     doc.text(label.metric, layout.toPdfX(label.center), layout.plotBottom + 9.4, { align: 'center' });
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('NotoSans', 'bold');
     doc.setFontSize(5.4);
-    doc.setTextColor(240, 223, 184);
+    setTextGray(doc, pdfPalette.ink);
   });
 
   rowLabels.forEach((label) => {
     doc.text(label.primary, layout.plotLeft - 2.8, layout.toPdfY(label.center) - 0.6, { align: 'right' });
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSans', 'normal');
     doc.setFontSize(4.2);
-    doc.setTextColor(177, 158, 122);
+    setTextGray(doc, pdfPalette.muted);
     doc.text(label.metric, layout.plotLeft - 2.8, layout.toPdfY(label.center) + 2.6, { align: 'right' });
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('NotoSans', 'bold');
     doc.setFontSize(5.4);
-    doc.setTextColor(240, 223, 184);
+    setTextGray(doc, pdfPalette.ink);
   });
 }
 
-function drawTableHeader(doc: jsPDF, pageNumber: number, schemeTitle: string) {
-  doc.setFillColor(20, 16, 12);
-  doc.rect(10, 10, 190, 277, 'F');
-  doc.setTextColor(240, 223, 184);
-  doc.setFont('helvetica', 'bold');
+function drawTableInstructions(doc: jsPDF) {
+  const sections = getTableInstructionSections();
+  let y = 33;
+
+  sections.forEach((section) => {
+    doc.setFont('NotoSans', 'bold');
+    doc.setFontSize(9);
+    setTextGray(doc, pdfPalette.ink);
+    doc.text(section.title, 14, y);
+    y += 5.5;
+
+    doc.setFont('NotoSans', 'normal');
+    doc.setFontSize(7.4);
+    section.lines.forEach((line) => {
+      const wrapped = doc.splitTextToSize(line, 172);
+      doc.text(wrapped, 14, y);
+      y += wrapped.length * 3.8 + 1.1;
+    });
+
+    y += 2;
+  });
+
+  return y;
+}
+
+function drawTableHeader(doc: jsPDF, pageNumber: number, schemeTitle: string, startY: number) {
+  setTextGray(doc, pdfPalette.ink);
+  doc.setFont('NotoSans', 'bold');
   doc.setFontSize(18);
   doc.text('Wall Specification', 14, 20);
   doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('NotoSans', 'normal');
   doc.text(schemeTitle || 'Untitled scheme', 14, 27);
   doc.text(`Page ${pageNumber}`, 180, 20, { align: 'right' });
-  doc.text('Code', 14, 36);
-  doc.text('Kind', 31, 36);
-  doc.text('Axis', 51, 36);
-  doc.text('Start', 63, 36);
-  doc.text('End', 95, 36);
-  doc.text('Len', 127, 36);
-  doc.text('H', 139, 36);
-  doc.text('Area', 150, 36);
-  doc.text('Cut', 188, 36, { align: 'right' });
-  doc.setDrawColor(157, 129, 84);
-  doc.line(14, 39, 190, 39);
+  doc.setFont('NotoSans', 'bold');
+  doc.setFontSize(8.2);
+  doc.text('Code', 14, startY);
+  doc.text('Kind', 31, startY);
+  doc.text('Axis', 51, startY);
+  doc.text('Start', 63, startY);
+  doc.text('End', 95, startY);
+  doc.text('Len', 127, startY);
+  doc.text('H', 139, startY);
+  doc.text('Area', 150, startY);
+  doc.text('Cut', 188, startY, { align: 'right' });
+  setDrawGray(doc, pdfPalette.border);
+  doc.line(14, startY + 3, 190, startY + 3);
 }
 
-function drawRowsPage(doc: jsPDF, rows: ExportRow[], pageNumber: number, schemeTitle: string) {
-  drawTableHeader(doc, pageNumber, schemeTitle);
-  doc.setFont('courier', 'normal');
+function drawRowsPage(doc: jsPDF, rows: ExportRow[], pageNumber: number, schemeTitle: string, includeInstructions: boolean) {
+  const headerY = includeInstructions ? drawTableInstructions(doc) + 4 : 36;
+  drawTableHeader(doc, pageNumber, schemeTitle, headerY);
+  doc.setFont('NotoSans', 'normal');
   doc.setFontSize(7.5);
+  setTextGray(doc, pdfPalette.ink);
 
   rows.forEach((row, index) => {
-    const y = 46 + index * 8;
+    const y = headerY + 10 + index * 8;
     doc.text(row.code, 14, y);
     doc.text(row.kind, 31, y);
     doc.text(row.axis, 51, y);
@@ -420,16 +487,23 @@ export function downloadCsvFile(document: CsvSchemeDocument, filename = createSc
 
 export function buildPdfDocument(scene: ExportScene) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  ensurePdfFont(doc);
   drawPlanPage(doc, scene);
 
-  const rowsPerPage = 27;
-  const totalPages = Math.max(1, Math.ceil(scene.rows.length / rowsPerPage));
+  const firstPageRows = 20;
+  const continuationRows = 27;
+  const totalPages =
+    scene.rows.length <= firstPageRows
+      ? 1
+      : 1 + Math.ceil((scene.rows.length - firstPageRows) / continuationRows);
 
   for (let pageIndex = 0; pageIndex < totalPages; pageIndex += 1) {
     doc.addPage();
-    const start = pageIndex * rowsPerPage;
-    const end = start + rowsPerPage;
-    drawRowsPage(doc, scene.rows.slice(start, end), pageIndex + 2, scene.schemeTitle);
+    const includeInstructions = pageIndex === 0;
+    const start = pageIndex === 0 ? 0 : firstPageRows + (pageIndex - 1) * continuationRows;
+    const pageSize = includeInstructions ? firstPageRows : continuationRows;
+    const end = start + pageSize;
+    drawRowsPage(doc, scene.rows.slice(start, end), pageIndex + 2, scene.schemeTitle, includeInstructions);
   }
 
   return doc;

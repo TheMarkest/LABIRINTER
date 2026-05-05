@@ -3,6 +3,8 @@ import { AppHeader } from './components/AppHeader';
 import { MazeCanvas } from './components/MazeCanvas';
 import { ParameterPanel } from './components/ParameterPanel';
 import { SummaryPanel } from './components/SummaryPanel';
+import { UsageDialog } from './components/UsageDialog';
+import { appUsageSections } from './content/instructions';
 import { buildExportRows, buildSelectionSummary } from './domain/calculations';
 import { createGeometry } from './domain/geometry';
 import { defaultParams } from './domain/params';
@@ -22,6 +24,7 @@ export default function App() {
   const [params, setParams] = useState<ProjectParams>(defaultParams);
   const [schemeTitle, setSchemeTitle] = useState('Main montage scheme');
   const [importNotice, setImportNotice] = useState<string | null>(null);
+  const [isUsageDialogOpen, setIsUsageDialogOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const geometry = createGeometry(params);
@@ -140,7 +143,10 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <AppHeader schemeTitle={schemeTitle} />
+      <AppHeader schemeTitle={schemeTitle} onOpenInstructions={() => setIsUsageDialogOpen(true)} />
+      {isUsageDialogOpen ? (
+        <UsageDialog sections={appUsageSections} onClose={() => setIsUsageDialogOpen(false)} />
+      ) : null}
       <div className="app-layout">
         <ParameterPanel
           params={params}
