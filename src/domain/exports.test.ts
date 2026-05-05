@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ExportRow } from './types';
-import { buildCsvContent, parseCsvContent } from './exports';
+import { buildCsvContent, buildPdfPlanLayout, parseCsvContent } from './exports';
+import { createGeometry } from './geometry';
 import { defaultParams } from './params';
 
 describe('buildCsvContent', () => {
@@ -78,5 +79,17 @@ describe('buildCsvContent', () => {
     expect(parsed.params).toMatchObject({ ...defaultParams, P: 14 });
     expect(parsed.rows).toHaveLength(1);
     expect(parsed.selectedIds).toEqual(['seg-1']);
+  });
+
+  it('keeps the PDF plan grid inside the plan frame after reserving axis gutters', () => {
+    const geometry = createGeometry({ ...defaultParams, P: 14 });
+    const layout = buildPdfPlanLayout(geometry);
+
+    expect(layout.plotLeft).toBeGreaterThan(layout.frame.left);
+    expect(layout.plotTop).toBeGreaterThan(layout.frame.top);
+    expect(layout.plotRight).toBeLessThan(layout.frame.left + layout.frame.width);
+    expect(layout.plotBottom).toBeLessThan(layout.frame.top + layout.frame.height);
+    expect(layout.toPdfY(0)).toBe(layout.plotBottom);
+    expect(layout.toPdfY(geometry.height)).toBe(layout.plotTop);
   });
 });

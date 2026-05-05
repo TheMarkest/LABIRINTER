@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { buildColumnBandLabels, buildRowBandLabels } from './addressing';
 import { defaultParams } from './params';
-import type { CsvSchemeDocument, ExportRow, ExportScene, ImportedSchemeDocument, ProjectParams } from './types';
+import type { CsvSchemeDocument, ExportRow, ExportScene, GridGeometry, ImportedSchemeDocument, ProjectParams } from './types';
 
 const csvColumns: Array<keyof ExportRow> = [
   'code',
@@ -119,20 +119,50 @@ function createSchemeFilename(schemeTitle: string, extension: 'csv' | 'pdf') {
   return `${slug || 'labirinter-scheme'}.${extension}`;
 }
 
+export function buildPdfPlanLayout(geometry: GridGeometry) {
+  const frame = {
+    left: 104,
+    top: 28,
+    width: 90,
+    height: 120,
+  };
+  const gutters = {
+    top: 12,
+    right: 6,
+    bottom: 18,
+    left: 14,
+  };
+  const availableWidth = frame.width - gutters.left - gutters.right;
+  const availableHeight = frame.height - gutters.top - gutters.bottom;
+  const scale = Math.min(availableWidth / Math.max(geometry.width, 1), availableHeight / Math.max(geometry.height, 1));
+  const plotWidth = geometry.width * scale;
+  const plotHeight = geometry.height * scale;
+  const plotLeft = frame.left + gutters.left + (availableWidth - plotWidth) / 2;
+  const plotTop = frame.top + gutters.top + (availableHeight - plotHeight) / 2;
+  const plotRight = plotLeft + plotWidth;
+  const plotBottom = plotTop + plotHeight;
+
+  return {
+    frame,
+    gutters,
+    scale,
+    plotLeft,
+    plotTop,
+    plotRight,
+    plotBottom,
+    plotWidth,
+    plotHeight,
+    toPdfX: (x: number) => plotLeft + x * scale,
+    toPdfY: (y: number) => plotBottom - y * scale,
+  };
+}
+
 function drawPlanPage(doc: jsPDF, scene: ExportScene) {
   const { geometry, params, rows, schemeTitle, summary } = scene;
   const pageWidth = doc.internal.pageSize.getWidth();
-  const planLeft = 104;
-  const planTop = 28;
-  const planWidth = 90;
-  const planHeight = 120;
-  const scale = Math.min(planWidth / Math.max(geometry.width, 1), planHeight / Math.max(geometry.height, 1));
-  const marginX = planLeft + (planWidth - geometry.width * scale) / 2;
-  const marginY = planTop + (planHeight - geometry.height * scale) / 2;
+  const layout = buildPdfPlanLayout(geometry);
   const columnLabels = buildColumnBandLabels(geometry.xPositions);
   const rowLabels = buildRowBandLabels(geometry.yPositions);
-  const toPdfX = (x: number) => marginX + x * scale;
-  const toPdfY = (y: number) => marginY + planHeight - y * scale;
 
   doc.setFillColor(20, 16, 12);
   doc.rect(10, 10, pageWidth - 20, 277, 'F');
@@ -193,54 +223,54 @@ function drawPlanPage(doc: jsPDF, scene: ExportScene) {
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.text('Plan View', 104, 20);
+  doc.text('Plan View', layout.frame.left, 20);
   doc.setDrawColor(157, 129, 84);
-  doc.roundedRect(planLeft, planTop, planWidth, planHeight, 4, 4);
+  doc.roundedRect(layout.frame.left, layout.frame.top, layout.frame.width, layout.frame.height, 4, 4);
 
   doc.setDrawColor(74, 64, 51);
   doc.setLineWidth(0.18);
   geometry.yPositions.forEach((y) => {
-    doc.line(toPdfX(0), toPdfY(y), toPdfX(geometry.width), toPdfY(y));
+    doc.line(layout.toPdfX(0), layout.toPdfY(y), layout.toPdfX(geometry.width), layout.toPdfY(y));
   });
   geometry.xPositions.forEach((x) => {
-    doc.line(toPdfX(x), toPdfY(0), toPdfX(x), toPdfY(geometry.height));
+    doc.line(layout.toPdfX(x), layout.toPdfY(0), layout.toPdfX(x), layout.toPdfY(geometry.height));
   });
 
   doc.setDrawColor(129, 102, 64);
   doc.setLineWidth(0.38);
   geometry.majorYPositions.forEach((y) => {
-    doc.line(toPdfX(0), toPdfY(y), toPdfX(geometry.width), toPdfY(y));
+    doc.line(layout.toPdfX(0), layout.toPdfY(y), layout.toPdfX(geometry.width), layout.toPdfY(y));
   });
   geometry.majorXPositions.forEach((x) => {
-    doc.line(toPdfX(x), toPdfY(0), toPdfX(x), toPdfY(geometry.height));
+    doc.line(layout.toPdfX(x), layout.toPdfY(0), layout.toPdfX(x), layout.toPdfY(geometry.height));
   });
 
   doc.setDrawColor(240, 174, 67);
   doc.setLineWidth(1.2);
   rows.forEach((row) => {
-    doc.line(toPdfX(row.startX), toPdfY(row.startY), toPdfX(row.endX), toPdfY(row.endY));
+    doc.line(layout.toPdfX(row.startX), layout.toPdfY(row.startY), layout.toPdfX(row.endX), layout.toPdfY(row.endY));
   });
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(5.4);
   doc.setTextColor(240, 223, 184);
   columnLabels.forEach((label) => {
-    doc.text(label.primary, toPdfX(label.center), planTop + planHeight + 6, { align: 'center' });
+    doc.text(label.primary, layout.toPdfX(label.center), layout.plotBottom + 5.5, { align: 'center' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(4.2);
     doc.setTextColor(177, 158, 122);
-    doc.text(label.metric, toPdfX(label.center), planTop + planHeight + 10, { align: 'center' });
+    doc.text(label.metric, layout.toPdfX(label.center), layout.plotBottom + 9.4, { align: 'center' });
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(5.4);
     doc.setTextColor(240, 223, 184);
   });
 
   rowLabels.forEach((label) => {
-    doc.text(label.primary, planLeft - 6, toPdfY(label.center) - 0.4, { align: 'right' });
+    doc.text(label.primary, layout.plotLeft - 2.8, layout.toPdfY(label.center) - 0.6, { align: 'right' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(4.2);
     doc.setTextColor(177, 158, 122);
-    doc.text(label.metric, planLeft - 6, toPdfY(label.center) + 3, { align: 'right' });
+    doc.text(label.metric, layout.plotLeft - 2.8, layout.toPdfY(label.center) + 2.6, { align: 'right' });
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(5.4);
     doc.setTextColor(240, 223, 184);
@@ -388,7 +418,7 @@ export function downloadCsvFile(document: CsvSchemeDocument, filename = createSc
   triggerDownload(filename, 'text/csv;charset=utf-8', buildCsvContent(document));
 }
 
-export function exportPdf(scene: ExportScene, filename = createSchemeFilename(scene.schemeTitle, 'pdf')) {
+export function buildPdfDocument(scene: ExportScene) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   drawPlanPage(doc, scene);
 
@@ -402,5 +432,10 @@ export function exportPdf(scene: ExportScene, filename = createSchemeFilename(sc
     drawRowsPage(doc, scene.rows.slice(start, end), pageIndex + 2, scene.schemeTitle);
   }
 
+  return doc;
+}
+
+export function exportPdf(scene: ExportScene, filename = createSchemeFilename(scene.schemeTitle, 'pdf')) {
+  const doc = buildPdfDocument(scene);
   doc.save(filename);
 }
